@@ -1,6 +1,6 @@
 # Bootloader
 
-A NASM bootloader with a basic, partially made kernel example written in c++
+A NASM bootloader with a very basic example kernel written in c++
 
 Building:
  - Building requires a cross compiler (If you need help building one, [this page on OSDev Wiki](https://wiki.osdev.org/GCC_Cross-Compiler) may be of some use).
