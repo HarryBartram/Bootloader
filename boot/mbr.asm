@@ -1,6 +1,8 @@
 [BITS 16]
 [ORG 0x7C00]
 
+BLOCKS 			equ				1046528
+
 STAGE2START 	equ				0x01
 STAGE2LOADPOINT equ				0x7E00
 
@@ -202,4 +204,4 @@ RootOffset:	  dd 0x00000000
 
 %include "boot/stage2.asm"
 
-times 1048576-($-$$) db 0x00
+times BLOCKS-($-$$) db 0x00

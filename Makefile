@@ -20,6 +20,8 @@ KERNELBIN=kernel/init.bin
 
 ISO=drive.iso
 
+BLOCKS=1048576
+
 all: ${KERNELBIN} ${ISO} run 
 
 ${INITASMOBJ}: ${INITASMSRC}
@@ -38,9 +40,9 @@ ${KERNELBIN}: ${INITASMOBJ} ${INITCPPOBJ} ${DISPLAYOBJ} ${HARDWAREOBJ}
 	${LD} -m elf_x86_64 -Ttext 0x8000 --oformat binary $^ -o $@
 
 ${ISO}: ${BOOTSRC} ${KERNELBIN} ${BOOTSRCINC}
-	nasm -fbin $< -o $@
-	dd if=/dev/zero bs=512 count=1046528 >> $@	
-	losetup /dev/loop100 -o 1048576 $@
+	nasm -fbin  $< -o $@
+	dd if=/dev/zero bs=512 count=${shell expr ${BLOCKS} - 2048} >> $@	
+	losetup /dev/loop100 -o ${BLOCKS} $@
 	mkfs.fat -F 32 /dev/loop100
 	mount /dev/loop100 /mnt/osdev
 	cp ${KERNELBIN} /mnt/osdev
