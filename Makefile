@@ -29,7 +29,7 @@ ${INITCPPOBJ}: kernel/%.cpp.o : kernel/%.cpp
 	${GCC} -fno-pie -ffreestanding -c $< -o $@
 
 ${DISPLAYOBJ}: kernel/display/%.cpp.o : kernel/display/%.cpp
-	${GCC} -fno-pie -ffreestanding -c $< -o $@
+	${GCC} -fno-pie -ffreestanding -fpermissive -c $< -o $@
 
 ${HARDWAREOBJ}: kernel/hardware/%.cpp.o : kernel/hardware/%.cpp
 	${GCC} -fno-pie -ffreestanding -c $< -o $@

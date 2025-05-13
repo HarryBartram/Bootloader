@@ -21,19 +21,16 @@ HIGHCLUSTERNUMOFF    equ			0x14
 
 STACKSTART equ					0x7B00
 
-; TODO
-; Implement error messages and checking
-
 ; TEXT	
 start:
-	xor ax, ax					; Set Up Segment Registers
+	xor ax, ax									; Set Up Segment Registers
 	mov ds, ax
 	mov es, ax
 
-	mov si, LoadSuccessStr				; Print Success Message For Load.
-	call printStr
+	;mov si, LoadSuccessStr						; Print Success Message For Load.
+	;call printStr
 
-	mov si, DAPACK					; Load Stage Two And The Kernel
+	mov si, DAPACK								; Load Stage Two And The Kernel
 	call loadStage2
 	call loadKernel
 
@@ -41,14 +38,14 @@ start:
 
 %include "boot/utils.asm" 
 
-loadStage2:						; Load Second Stage
+loadStage2:										; Load Second Stage
 	mov ah, 0x42
 	int 0x13
 	jc loadError
 	ret
 
 loadKernel:	
-	mov eax, FATBOOTPARTSTART			; Load FAT Boot Sector
+	mov eax, FATBOOTPARTSTART					; Load FAT Boot Sector
 	mov [d_lba], eax
 	mov ax, FATBOOTLOADPOINT
 	mov [db_add], ax
@@ -56,7 +53,7 @@ loadKernel:
 	int 0x13
 	jc loadError
 
-	mov bx, FATBOOTLOADPOINT			; Get Sectors Per Cluster
+	mov bx, FATBOOTLOADPOINT					; Get Sectors Per Cluster
 	mov al, byte [bx + SECTORSPERCLUSTEROFF]
 	mov [SectorsInCluster], al
 
@@ -66,15 +63,15 @@ loadKernel:
 	mov eax, dword [bx + SECTORSPERFATOFF]		; Get Size Of Each FAT
 	mov [SectorsPerFAT], eax
 
-	push dx						; Push Drive Num (So Not Smashed By Mul)
+	push dx										; Push Drive Num (So Not Smashed By Mul)
 
-	mov cx, 0x02					; Get Offset To Root Directory
+	mov cx, 0x02								; Get Offset To Root Directory
 	mul cx
 	mov [RootOffset], eax
 
 	pop dx
 
-	add eax, FATBOOTPARTSTART			; Load Root Directory
+	add eax, FATBOOTPARTSTART					; Load Root Directory
 	add ax, word [FATOffset]
 	mov [d_lba], eax
 	mov ah, 0x42
@@ -83,7 +80,7 @@ loadKernel:
 
 	push dx
 
-	mov di, bx					; Search For Directory Entry Of 'init'
+	mov di, bx									; Search For Directory Entry Of 'init'
 .CheckFATName:
 	add di, 0x01
 	mov ax, 0x00
@@ -103,12 +100,16 @@ loadKernel:
 	cmp ax, 0x00
 	je .FoundDir
 
-	add bx, DIRECTORYENTRYSIZE			; add ability to differentiate LFNs and Non-LFNs
+	add bx, DIRECTORYENTRYSIZE					; add ability to differentiate LFNs and Non-LFNs
 	add bx, DIRECTORYENTRYSIZE
 	
 	mov si, bx
 	cmp byte [si], 'A'
 	je .CheckFATName
+
+.NotFoundDir:
+	mov si, KernelNotFoundString
+	call printStr
 
 	jmp hang
 
@@ -142,24 +143,24 @@ loadKernel:
 
 	ret
 
-loadError:
-	mov al, ah
-	mov ah, 0x0E
-	add al, '0'
-	int 0x10
+loadError:										; Failure on a drive read operation(int 0x13, ah=0x42)
+	mov si, LoadErrorString
+	call printStr
 	jmp hang
 
 ; DATA
-LoadSuccessStr: 
-	db "Booting!", 0x0A, 0x0D, 0x00
+LoadErrorString: 
+	db "Could not read from disk", 0x00
+KernelNotFoundString:
+	db "Kernel file not found", 0x0D, 0x0A, 0x00
 
-DAPACK:							; INT 13h Data
+DAPACK:											; INT 13h Data
 	db 0x10
 	db 0x00
-blkcnt: dw 0x01						; This Is Reset To Number Of Blocks Actually Read
-db_add: dw STAGE2LOADPOINT				; Memory Buffer Destination
-	dw 0x00						; Memory Page Number
-d_lba:  dd STAGE2START					; LBA Source Address
+blkcnt: dw 0x01									; This Is Reset To Number Of Blocks Actually Read
+db_add: dw STAGE2LOADPOINT						; Memory Buffer Destination
+	dw 0x00										; Memory Page Number
+d_lba:  dd STAGE2START							; LBA Source Address
 	dd 0x00
 
 times 440-($-$$) db 0
@@ -193,8 +194,8 @@ PartTable4:
 	dq 0x00
 dw 0xAA55
 
-InitFileNameStr:  db "init", 0x00
-SectorsInCluster: db 0x00				; FAT Related Information
+InitFileNameStr:  db "init", 0x00				; Kernel file name
+SectorsInCluster: db 0x00						; FAT Related Information
 FATOffset:	  dw 0x0000
 SectorsPerFAT:	  dd 0x00000000
 RootOffset:	  dd 0x00000000

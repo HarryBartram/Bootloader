@@ -1,4 +1,5 @@
 #include "display.hpp"
+#include "../hardware/ports.hpp"
 
 #include <stdarg.h>
 
@@ -57,9 +58,14 @@ void Display::MoveBufferNextLine(void)
 
 }
 
-void Display::MoveCursor(void)
+void Display::UpdateCursor(void)
 {
+	Word pos = reinterpret_cast<Word>(buffer-0xB8000)/2;
 
+	hardware::OutByte(CRTC_ADDRESS_PORT, 0x0F);
+	hardware::OutByte(CRTC_DATA_PORT, (pos & 0xFF));
+	hardware::OutByte(CRTC_ADDRESS_PORT, 0x0E);
+	hardware::OutByte(CRTC_DATA_PORT, ((pos >> 8) & 0xFF));
 }
 
 void Display::ResetBuffer(void)
@@ -107,6 +113,23 @@ void Display::PrintF(char *string, ...)
 			}
 		}
 	}
+
+	this->UpdateCursor();
+}
+
+void Display::DisableCursor()
+{
+	hardware::OutByte(CRTC_ADDRESS_PORT, 0x0A);
+	hardware::OutByte(CRTC_DATA_PORT, 0x20);
+}
+
+void Display::EnableCursor(Byte cursorStart, Byte cursorEnd)
+{
+	hardware::OutByte(CRTC_ADDRESS_PORT, 0x0A);
+	hardware::OutByte(CRTC_DATA_PORT, (hardware::InByte(CRTC_DATA_PORT) & 0xC0) | cursorStart);
+
+	hardware::OutByte(CRTC_ADDRESS_PORT, 0x0B);
+	hardware::OutByte(CRTC_DATA_PORT, (hardware::InByte(CRTC_DATA_PORT) & 0xE0) | cursorEnd);
 }
 
 //////////////////////////////////////////////////////////////////

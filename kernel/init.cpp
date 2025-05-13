@@ -11,6 +11,4 @@ void kmain()
 
 	d.Clear();
 	d.PrintF(str, number);
-
-	hardware::OutByte(hardware::Port::NOPORT, 0x00);
 }
